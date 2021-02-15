@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{7B4BABC6-4CB4-4AF3-BC73-D8649219999C}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ApiInter.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ApiInter">
+        <MSBuild Projects="ApiInter.dproj"/>
+    </Target>
+    <Target Name="ApiInter:Clean">
+        <MSBuild Projects="ApiInter.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ApiInter:Make">
+        <MSBuild Projects="ApiInter.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ApiInter"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ApiInter:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ApiInter:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
