@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  Vcl.Buttons, System.DateUtils;
+  Vcl.Buttons, System.DateUtils, Winapi.ShellAPI;
 
 type
   TFFormMain = class(TForm)
@@ -31,10 +31,12 @@ type
     MemoAlert: TMemo;
     EditPagadorCidade: TLabeledEdit;
     EditPagadorCEP: TLabeledEdit;
+    ButtonGetPDF: TButton;
     procedure ButtonGetBoletoClick(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
     procedure ButtonCreateBoletoClick(Sender: TObject);
+    procedure ButtonGetPDFClick(Sender: TObject);
   private
     { Private declarations }
     procedure GetDir(Edit: TLabeledEdit);
@@ -114,6 +116,19 @@ begin
   end;
 
 
+end;
+
+procedure TFFormMain.ButtonGetPDFClick(Sender: TObject);
+begin
+  var BancoInter: TBancoInter := TBancoInter.Create(EditAccountNumber.Text, EditCertificateFile.Text, EditKeyFile.Text);
+  try
+
+    Memo.Text := BancoInter.getPdfBoleto( EditNossoNomero.Text, ExtractFilePath(Application.ExeName) );
+    ShellExecute(Handle, nil, PChar(Memo.Text), nil,  nil, SW_SHOWNORMAL);
+
+  finally
+    BancoInter.Free;
+  end;
 end;
 
 end.

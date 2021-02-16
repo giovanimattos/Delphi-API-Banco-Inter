@@ -20,7 +20,6 @@ object FFormMain: TFFormMain
     Height = 539
     Align = alClient
     TabOrder = 0
-    ExplicitHeight = 518
   end
   object Panel1: TPanel
     Left = 0
@@ -30,7 +29,6 @@ object FFormMain: TFFormMain
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitHeight = 518
     object GroupBox1: TGroupBox
       Left = 0
       Top = 153
@@ -40,23 +38,32 @@ object FFormMain: TFFormMain
       Caption = 'GET Boleto'
       TabOrder = 0
       object ButtonGetBoleto: TButton
-        Left = 232
+        Left = 175
         Top = 30
-        Width = 75
+        Width = 62
         Height = 25
-        Caption = 'GET'
+        Caption = 'Get JSON'
         TabOrder = 0
         OnClick = ButtonGetBoletoClick
       end
       object EditNossoNomero: TLabeledEdit
         Left = 10
         Top = 34
-        Width = 199
+        Width = 159
         Height = 21
         EditLabel.Width = 69
         EditLabel.Height = 13
         EditLabel.Caption = 'Nosso N'#250'mero'
         TabOrder = 1
+      end
+      object ButtonGetPDF: TButton
+        Left = 245
+        Top = 30
+        Width = 62
+        Height = 25
+        Caption = 'Get PDF'
+        TabOrder = 2
+        OnClick = ButtonGetPDFClick
       end
     end
     object GroupBoxConf: TGroupBox
@@ -124,7 +131,6 @@ object FFormMain: TFFormMain
       Align = alTop
       Caption = 'Create Boleto'
       TabOrder = 2
-      ExplicitTop = 227
       object ButtonCreateBoleto: TButton
         Left = 232
         Top = 144

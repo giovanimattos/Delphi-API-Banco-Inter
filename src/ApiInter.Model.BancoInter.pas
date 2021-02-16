@@ -4,7 +4,7 @@ interface
 
 uses
   ApiInter.Model.Boleto, ApiInter.Model.JsonSerializable, ApiInter.Commons,
-  System.SysUtils, System.JSON, System.Classes;
+  System.SysUtils, System.JSON, System.Classes, System.NetEncoding;
 
 type
 
@@ -23,6 +23,8 @@ type
     destructor Destroy; override;
     function GetBoleto(NossoNumero: string): string;
     function CreateBoleto(Boleto: TBoleto): string;
+    function getPdfBoleto(NossoNumero, SavePath: string): string;
+
   end;
 
 Const
@@ -43,7 +45,6 @@ begin
   FKeyPassword := '';
   FCurl := '';
   FHttp_params := TStringList.Create;
-  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber)
 end;
 
 destructor TBancoInter.Destroy;
@@ -127,6 +128,10 @@ function TBancoInter.getBoleto(NossoNumero: string): string;
 Var
   Reply: TReply;
 begin
+  FHttp_params.Clear;
+  FHttp_params.AddPair('accept', 'application/json');
+  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber);
+
   Reply := Self.ControllerGet('/openbanking/v1/certificado/boletos/' + NossoNumero);
   Result := Reply.body;
 end;
@@ -135,6 +140,10 @@ function TBancoInter.CreateBoleto(Boleto: TBoleto): string;
 Var
   Reply: TReply;
 begin
+  FHttp_params.Clear;
+  FHttp_params.AddPair('accept', 'application/json');
+  FHttp_params.AddPair('Content-type', 'application/json');
+  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber);
 
   Reply := Self.ControllerPost('/openbanking/v1/certificado/boletos', Boleto as TJsonSerializable);
 
@@ -150,6 +159,35 @@ begin
 
   finally
     LJSONObject.Free;
+  end;
+
+end;
+
+function TBancoInter.getPdfBoleto(NossoNumero, SavePath: string): string;
+Var
+  Reply: TReply;
+  ASource: TStringStream;
+  ATarget: TMemoryStream;
+begin
+  FHttp_params.Clear;
+  FHttp_params.AddPair('accept', 'application/pdf');
+  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber);
+
+  Reply := Self.ControllerGet('/openbanking/v1/certificado/boletos/' + NossoNumero + '/pdf');
+
+  ASource := TStringStream.Create(Reply.body);
+  ATarget:= TMemoryStream.Create;
+  try
+
+    TBase64Encoding.Base64.Decode(ASource, ATarget);
+
+    Result := SavePath + '\boleto-inter-' + NossoNumero + '.pdf';
+
+    ATarget.SaveToFile( Result );
+
+  finally
+    ASource.Free;
+    ATarget.Free;
   end;
 
 end;

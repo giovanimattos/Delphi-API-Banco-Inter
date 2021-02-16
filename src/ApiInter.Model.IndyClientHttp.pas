@@ -47,8 +47,8 @@ begin
   IdHTTP := TIdHTTP.Create(ATarget);
   IdHTTP.Request.BasicAuthentication := False;
   IdHTTP.Request.UserAgent := 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0';
-  IdHTTP.Request.Accept := 'application/json';
-  IdHTTP.Request.ContentType := 'application/json';
+  //IdHTTP.Request.Accept := 'application/json';
+  //IdHTTP.Request.ContentType := 'application/json';
 
   IdSSLIOHandlerSocket := TIdSSLIOHandlerSocketOpenSSL.Create( IdHTTP );
   IdSSLIOHandlerSocket.SSLOptions.Method := sslvTLSv1_2;
