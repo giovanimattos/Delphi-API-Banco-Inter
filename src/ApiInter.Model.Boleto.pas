@@ -22,9 +22,8 @@ type
     FDataEmissao: String;
     FcnpjCPFBeneficiario: string;
     FSeuNumero: string;
-    FNumDiasAgenda: string;
+    FNumDiasAgenda: Integer;
     FValorAbatimento: Currency;
-    FDataLimite: string;
     FMensagem: TMensagem;
     FDesconto2: TDesconto;
     FDesconto3: TDesconto;
@@ -32,7 +31,6 @@ type
     function GetcnpjCPFBeneficiario: string;
     function GetCodigoBarras: String;
     function GetDataEmissao: String;
-    function GetDataLimite: string;
     function GetDataVencimento: String;
     function GetDesconto1: TDesconto;
     function GetDesconto2: TDesconto;
@@ -42,7 +40,7 @@ type
     function GetMora: TMora;
     function GetMulta: TMulta;
     function GetNossoNumero: String;
-    function GetNumDiasAgenda: string;
+    function GetNumDiasAgenda: Integer;
     function GetPagador: TPagador;
     function GetSeuNumero: string;
     function GetValorAbatimento: Currency;
@@ -50,7 +48,6 @@ type
     procedure SetcnpjCPFBeneficiario(const Value: string);
     procedure SetCodigoBarras(const Value: String);
     procedure SetDataEmissao(const Value: String);
-    procedure SetDataLimite(const Value: string);
     procedure SetDataVencimento(const Value: String);
     procedure SetDesconto1(const Value: TDesconto);
     procedure SetDesconto2(const Value: TDesconto);
@@ -60,7 +57,7 @@ type
     procedure SetMora(const Value: TMora);
     procedure SetMulta(const Value: TMulta);
     procedure SetNossoNumero(const Value: String);
-    procedure SetNumDiasAgenda(const Value: string);
+    procedure SetNumDiasAgenda(const Value: Integer);
     procedure SetPagador(const Value: TPagador);
     procedure SetSeuNumero(const Value: string);
     procedure SetValorAbatimento(const Value: Currency);
@@ -68,12 +65,11 @@ type
   public
     property DataEmissao: String read GetDataEmissao write SetDataEmissao;
     property SeuNumero: string read GetSeuNumero write SetSeuNumero;
-    property DataLimite: string read GetDataLimite write SetDataLimite;
     property DataVencimento: String read GetDataVencimento write SetDataVencimento;
     property ValorNominal: Currency read GetValorNominal write SetValorNominal;
     property ValorAbatimento: Currency read GetValorAbatimento write SetValorAbatimento;
     property cnpjCPFBeneficiario: string read GetcnpjCPFBeneficiario write SetcnpjCPFBeneficiario;
-    property NumDiasAgenda: string read GetNumDiasAgenda write SetNumDiasAgenda;
+    property NumDiasAgenda: Integer read GetNumDiasAgenda write SetNumDiasAgenda;
     property Pagador: TPagador read GetPagador write SetPagador;
     property Mensagem: TMensagem read GetMensagem write SetMensagem;
     property Desconto1: TDesconto read GetDesconto1 write SetDesconto1;
@@ -89,9 +85,29 @@ type
     destructor Destroy; override;
   end;
 
+  TBoletoPDFRetorno = class(TJsonSerializable)
+  private
+    Fpdf: String;
+  published
+    property pdf: String read Fpdf write Fpdf;
+  end;
+  TBoletoCancelamento = class(TJsonSerializable)
+  private
+    FmotivoCancelamento: String;
+  published
+    property motivoCancelamento: String read FmotivoCancelamento write FmotivoCancelamento;
+  end;
+
 const
-  SESSENTA_DIAS = 'SESSENTA';
-  TRINTA_DIAS   = 'TRINTA';
+  SESSENTA_DIAS = 60;
+  TRINTA_DIAS   = 30;
+
+
+    MOTIVO_CANCELAMENTO_ACERTOS = 'ACERTOS' ;// (cancelado por acertos)
+    MOTIVO_CANCELAMENTO_APEDIDODOCLIENTE = 'APEDIDODOCLIENTE'; //(cancelado a pedido do cliente)
+    MOTIVO_CANCELAMENTO_PAGODIRETOAOCLIENTE = 'PAGODIRETOAOCLIENTE';// (cancelado por ter sido pago direto ao cliente)
+    MOTIVO_CANCELAMENTO_SUBSTITUICAO = 'SUBSTITUICAO';// (cancelado por substituição)
+
 
 implementation
 
@@ -110,7 +126,6 @@ begin
   FSeuNumero:= '';
   FNumDiasAgenda:= SESSENTA_DIAS;
   FValorAbatimento:= 0.0;
-  FDataLimite:= SESSENTA_DIAS;
   FMora:= TMora.Create;
   FMulta:= TMulta.Create;
   FPagador:= TPagador.Create;
@@ -145,11 +160,6 @@ end;
 function TBoleto.GetDataEmissao: String;
 begin
   Result := FDataEmissao;
-end;
-
-function TBoleto.GetDataLimite: string;
-begin
-  Result := FDataLimite;
 end;
 
 function TBoleto.GetDataVencimento: String;
@@ -197,7 +207,7 @@ begin
   Result := FNossoNumero;
 end;
 
-function TBoleto.GetNumDiasAgenda: string;
+function TBoleto.GetNumDiasAgenda: Integer;
 begin
   Result := FNumDiasAgenda;
 end;
@@ -235,11 +245,6 @@ end;
 procedure TBoleto.SetDataEmissao(const Value: String);
 begin
   FDataEmissao := Value;
-end;
-
-procedure TBoleto.SetDataLimite(const Value: string);
-begin
-  FDataLimite := Value;
 end;
 
 procedure TBoleto.SetDataVencimento(const Value: String);
@@ -287,7 +292,7 @@ begin
   FNossoNumero := Value;
 end;
 
-procedure TBoleto.SetNumDiasAgenda(const Value: string);
+procedure TBoleto.SetNumDiasAgenda(const Value: Integer);
 begin
   FNumDiasAgenda := Value;
 end;

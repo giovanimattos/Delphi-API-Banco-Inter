@@ -18,9 +18,11 @@ type
     function SetCertificateFile(CertificateFile: String): IClientHttp;
     function SetKeyFile(KeyFile: String): IClientHttp;
     function SetKeyPassword(KeyPassword: String): IClientHttp;
+    function SetBearerToken(token: String): IClientHttp;
     function SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
     function Get: TReply;
-    function Post(ASource: String): TReply;
+    function Post(ASource: String): TReply; overload;
+    function Post(ASource: TStrings): TReply; overload;
   protected
     constructor Create;
     destructor Destroy; override;
@@ -49,6 +51,7 @@ begin
   IdHTTP.Request.UserAgent := 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0';
   //IdHTTP.Request.Accept := 'application/json';
   //IdHTTP.Request.ContentType := 'application/json';
+  IdHTTP.HTTPOptions :=  IdHTTP.HTTPOptions + [hoNoprotocolErrorException,hoWantProtocolErrorContent ];
 
   IdSSLIOHandlerSocket := TIdSSLIOHandlerSocketOpenSSL.Create( IdHTTP );
   IdSSLIOHandlerSocket.SSLOptions.Method := sslvTLSv1_2;
@@ -70,6 +73,13 @@ function TIndyClientHttp.SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
 begin
   Result := Self;
   IdHTTP.Request.CustomHeaders.AddStrings(CustomHeaders);
+end;
+
+function TIndyClientHttp.SetBearerToken(token: String): IClientHttp;
+begin
+  result := self;
+  if not token.IsEmpty then
+    IdHTTP.Request.CustomHeaders.Add('Authorization: Bearer ' + token);
 end;
 
 function TIndyClientHttp.SetCertificateFile(CertificateFile: String): IClientHttp;
@@ -155,6 +165,31 @@ begin
     RequestBody.Free;
   end;
 
+end;
+
+function TIndyClientHttp.Post(ASource: TStrings): TReply;
+begin
+  Result.Header := '';
+  Result.Body := '';
+  Result.Http_code := 0;
+  Result.Http_response := '';
+
+  try
+    try
+      Result.Body := IdHTTP.Post(IdHTTP.Request.URL, ASource);
+
+      Result.Header := '';
+      Result.Http_code := IdHTTP.ResponseCode;
+      Result.Http_response := IdHTTP.ResponseText;
+    except
+      on e: exception do
+      begin
+        Result.Http_code := IdHTTP.ResponseCode;
+        Result.Http_response := IdHTTP.ResponseText;
+      end;
+    end;
+  finally
+  end;
 end;
 
 end.

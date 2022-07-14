@@ -13,9 +13,11 @@ type
     function SetCertificateFile(CertificateFile: String): IClientHttp;
     function SetKeyFile(KeyFile: String): IClientHttp;
     function SetKeyPassword(KeyPassword: String): IClientHttp;
+    function SetBearerToken(token: String): IClientHttp;
     function SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
     function Get: TReply;
-    function Post(ASource: String): TReply;
+    function Post(ASource: String): TReply;  overload;
+    function Post(ASource: TStrings): TReply; overload;
   end;
 
 implementation
