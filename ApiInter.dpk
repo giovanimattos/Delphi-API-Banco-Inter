@@ -36,6 +36,7 @@ requires
 contains
   ApiInter.Commons in 'src\ApiInter.Commons.pas',
   ApiInter.Controller.Http in 'src\ApiInter.Controller.Http.pas',
+  ApiInter.Model.OAuth.pas in 'src\ApiInter.Model.OAuth.pas',
   ApiInter.Model.BancoInter in 'src\ApiInter.Model.BancoInter.pas',
   ApiInter.Model.Boleto in 'src\ApiInter.Model.Boleto.pas',
   ApiInter.Model.Contract in 'src\ApiInter.Model.Contract.pas',

@@ -4,7 +4,8 @@ interface
 
 uses
   ApiInter.Model.Boleto, ApiInter.Model.JsonSerializable, ApiInter.Commons,
-  System.SysUtils, System.JSON, System.Classes, System.NetEncoding;
+  System.SysUtils, System.JSON, System.Classes, System.NetEncoding,
+  ApiInter.Model.OAuth;
 
 type
 
@@ -19,16 +20,19 @@ type
     function ControllerGet(Url: string): TReply;
     function ControllerPost(Url: string; Data: TJsonSerializable): TReply;
   public
+    oAuthToken:TOAuthToken;
     constructor Create(AccountNumber, CertificateFile, KeyFile: string);
+    function auth(ClientId, ClientSecret: String): TReply;
     destructor Destroy; override;
     function GetBoleto(NossoNumero: string): string;
+    function CancelarBoleto(NossoNumero: string;motivoCancelamento:TBoletoCancelamento): string;
     function CreateBoleto(Boleto: TBoleto): string;
     function getPdfBoleto(NossoNumero, SavePath: string): string;
 
   end;
 
 Const
-  _APIBASEURL = 'https://apis.bancointer.com.br';
+  _APIBASEURL = 'https://cdpj.partners.bancointer.com.br';
 
 implementation
 
@@ -45,12 +49,86 @@ begin
   FKeyPassword := '';
   FCurl := '';
   FHttp_params := TStringList.Create;
+  oAuthToken := TOAuthToken.Create;
 end;
 
 destructor TBancoInter.Destroy;
 begin
   FHttp_params.Free;
+  oAuthToken.Free;
   inherited;
+end;
+
+function TBancoInter.auth(ClientId, ClientSecret: String):TReply;
+begin
+  var NumeroDeTentativas: Integer := 5;
+  var FormData:TStringList := TStringList.Create;
+  try
+    FHttp_params.Clear;
+    FHttp_params.AddPair('Content-Type', 'application/x-www-form-urlencoded');
+    FormData.AddPair('client_id',ClientId);
+    FormData.AddPair('client_secret',ClientSecret);
+    FormData.AddPair('scope','boleto-cobranca.read boleto-cobranca.write'); // extrato.read');
+    FormData.AddPair('grant_type','client_credentials');
+
+    while (NumeroDeTentativas > 0) do
+    begin
+      Result :=
+        TControllerHttp
+          .New
+          .SetUrl(_APIBASEURL + '/oauth/v2/token')
+          .SetCertificateFile(FCertificateFile)
+          .SetKeyFile(FKeyFile)
+          .SetKeyPassword(FKeyPassword)
+          .SetCustomHeaders(FHttp_params)
+          .Post(FormData);
+
+      if (Result.Http_code = 503) then
+      begin
+        Dec(NumeroDeTentativas);
+        sleep(5);
+      end
+      else
+      begin
+        NumeroDeTentativas := 0;
+      end;
+
+    end;
+
+    if (Result.Http_code = 0) then
+      raise Exception.Create('Curl error: ' + Result.Http_response);
+
+    if (Result.Http_code < 200) or (Result.Http_code > 299) then
+      raise Exception.Create('Erro HTTP: ' + Result.Http_code.ToString + Result.Http_response + sLineBreak +result.Body);
+    oAuthToken.Free;
+    oAuthToken := TOAuthToken.Create;
+    oAuthToken.FromJson(result.Body);
+
+  finally
+    FormData.Free;
+  end;
+end;
+
+function TBancoInter.CancelarBoleto(NossoNumero: string; motivoCancelamento:TBoletoCancelamento): string;
+Var
+  Reply: TReply;
+begin
+  FHttp_params.Clear;
+  FHttp_params.AddPair('Content-type', 'application/json');
+
+  Reply := Self.ControllerPost('/cobranca/v2/boletos/'+NossoNumero+'/cancelar', motivoCancelamento as TJsonSerializable);
+
+  var LJSONObject: TJSONObject := nil;
+  try
+    result := '';
+
+    LJSONObject := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( Reply.body ), 0) as TJSONObject;
+    if(LJSONObject<>nil) then
+      Result := LJSONObject.ToString;
+
+  finally
+    LJSONObject.Free;
+  end;
 end;
 
 function TBancoInter.ControllerGet(Url: string): TReply;
@@ -67,6 +145,7 @@ begin
         .SetKeyFile(FKeyFile)
         .SetKeyPassword(FKeyPassword)
         .SetCustomHeaders(FHttp_params)
+        .SetBearerToken(self.oAuthToken.access_token)
         .Get;
 
     if (Result.Http_code = 503) then
@@ -85,8 +164,7 @@ begin
     raise Exception.Create('Curl error: ' + Result.Http_response);
 
   if (Result.Http_code < 200) or (Result.Http_code > 299) then
-    raise Exception.Create('Erro HTTP: ' + Result.Http_code.ToString + Result.Http_response);
-
+    raise Exception.Create('Erro HTTP: ' + Result.Http_code.ToString + Result.Http_response + sLineBreak +result.Body);
 end;
 
 function TBancoInter.ControllerPost(Url: string; Data: TJsonSerializable): TReply;
@@ -102,6 +180,7 @@ begin
         .SetCertificateFile(FCertificateFile)
         .SetKeyFile(FKeyFile)
         .SetKeyPassword(FKeyPassword)
+        .SetBearerToken(self.oAuthToken.access_token)
         .SetCustomHeaders(FHttp_params)
         .Post(Data.ToJson);
 
@@ -121,7 +200,7 @@ begin
     raise Exception.Create('Curl error: ' + Result.Http_response);
 
   if (Result.Http_code < 200) or (Result.Http_code > 299) then
-    raise Exception.Create('Erro HTTP: ' + Result.Http_code.ToString + Result.Http_response);
+    raise Exception.Create('Erro HTTP: ' + Result.Http_code.ToString + Result.Http_response + sLineBreak +result.Body);
 end;
 
 function TBancoInter.getBoleto(NossoNumero: string): string;
@@ -129,10 +208,8 @@ Var
   Reply: TReply;
 begin
   FHttp_params.Clear;
-  FHttp_params.AddPair('accept', 'application/json');
-  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber);
 
-  Reply := Self.ControllerGet('/openbanking/v1/certificado/boletos/' + NossoNumero);
+  Reply := Self.ControllerGet('/cobranca/v2/boletos/'+NossoNumero);
   Result := Reply.body;
 end;
 
@@ -141,11 +218,9 @@ Var
   Reply: TReply;
 begin
   FHttp_params.Clear;
-  FHttp_params.AddPair('accept', 'application/json');
   FHttp_params.AddPair('Content-type', 'application/json');
-  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber);
 
-  Reply := Self.ControllerPost('/openbanking/v1/certificado/boletos', Boleto as TJsonSerializable);
+  Reply := Self.ControllerPost('/cobranca/v2/boletos', Boleto as TJsonSerializable);
 
   var LJSONObject: TJSONObject := nil;
   try
@@ -171,11 +246,15 @@ Var
 begin
   FHttp_params.Clear;
   FHttp_params.AddPair('accept', 'application/pdf');
-  FHttp_params.AddPair('x-inter-conta-corrente', FAccountNumber);
 
-  Reply := Self.ControllerGet('/openbanking/v1/certificado/boletos/' + NossoNumero + '/pdf');
-
-  ASource := TStringStream.Create(Reply.body);
+  Reply := Self.ControllerGet('/cobranca/v2/boletos/'+NossoNumero+'/pdf');
+  var pdfRetorno : TBoletoPDFRetorno := TBoletoPDFRetorno.Create;
+  try
+    pdfRetorno.FromJson(reply.Body);
+    ASource := TStringStream.Create(pdfRetorno.pdf);
+  finally
+    pdfRetorno.Free;
+  end;
   ATarget:= TMemoryStream.Create;
   try
 

@@ -3,13 +3,13 @@ unit ApiInter.Model.Pagador;
 interface
 
 uses
-  ApiInter.Model.JsonSerializable;
+  ApiInter.Model.JsonSerializable, SysUtils;
 
 type
 
   TPagador = class(TJsonSerializable)
   private
-    FCnpjCpf: String;
+    FcpfCnpj: String;
     FTipoPessoa: String;
     FEmail: String;
     FBairro: String;
@@ -22,7 +22,7 @@ type
     FCidade: String;
     FEndereco: String;
     FTelefone: String;
-    function GetCnpjCpf: String;
+    function GetcpfCnpj: String;
     function GetBairro: String;
     function GetCep: String;
     function GetCidade: String;
@@ -35,7 +35,7 @@ type
     function GetTelefone: String;
     function GetTipoPessoa: String;
     function GetUf: String;
-    procedure SetCnpjCpf(const Value: String);
+    procedure SetcpfCnpj(const Value: String);
     procedure SetBairro(const Value: String);
     procedure SetCep(const Value: String);
     procedure SetCidade(const Value: String);
@@ -49,7 +49,7 @@ type
     procedure SetTipoPessoa(const Value: String);
     procedure SetUf(const Value: String);
   public
-    property CnpjCpf: String read GetCnpjCpf write SetCnpjCpf;
+    property cpfCnpj: String read GetcpfCnpj write SetcpfCnpj;
     property Nome: String read GetNome write SetNome;
     property Cep: String read GetCep write SetCep;
     property Bairro: String read GetBairro write SetBairro;
@@ -87,9 +87,9 @@ begin
   Result := FCidade;
 end;
 
-function TPagador.GetCnpjCpf: String;
+function TPagador.GetcpfCnpj: String;
 begin
-  Result := FCnpjCpf;
+  Result := FcpfCnpj;
 end;
 
 function TPagador.GetComplemento: String;
@@ -144,7 +144,7 @@ end;
 
 procedure TPagador.SetCep(const Value: String);
 begin
-  FCep := Value;
+  FCep :=  Value.Replace('-','');
 end;
 
 procedure TPagador.SetCidade(const Value: String);
@@ -152,9 +152,9 @@ begin
   FCidade := Value;
 end;
 
-procedure TPagador.SetCnpjCpf(const Value: String);
+procedure TPagador.SetcpfCnpj(const Value: String);
 begin
-  FCnpjCpf := Value;
+  FcpfCnpj := Value;
 end;
 
 procedure TPagador.SetComplemento(const Value: String);
