@@ -3,12 +3,10 @@ unit ApiInter.Model.FiltroBoleto;
 interface
 uses
   ApiInter.Model.JsonSerializable, REST.Json.Types, JSON, dateutils;
-
 const
     FILTRO_RELACAO_BOLETOS_FILTRARPOR_VENCIMENTO = 'VENCIMENTO';
     FILTRO_RELACAO_BOLETOS_FILTRARPOR_EMISSAO    = 'EMISSAO';
     FILTRO_RELACAO_BOLETOS_FILTRARPOR_SITUACAO   = 'SITUACAO';
-
     FILTRO_RELACAO_BOLETOS_SITUACAO_EXPIRADO     = 'EXPIRADO';
     FILTRO_RELACAO_BOLETOS_SITUACAO_VENCIDO      = 'VENCIDO';
     FILTRO_RELACAO_BOLETOS_SITUACAO_EMABERTO     = 'EMABERTO';
@@ -28,9 +26,7 @@ const
 type
   TFiltroBoleto = class(TJsonSerializable)
   private
-
     FfiltrarDataPor: String;
-
     FdataFinal: String;
     FdataInicial: String;
     Fsituacao: String;
@@ -41,7 +37,6 @@ type
     FordenarPor: String;
     FtipoOrdenacao: String; public
     function ToJson: TJSONObject; override;
-
     property dataInicial: String read FdataInicial write FdataInicial;
     property dataFinal: String read FdataFinal write FdataFinal;
     property filtrarDataPor: String read FfiltrarDataPor write FfiltrarDataPor;
@@ -54,11 +49,9 @@ type
     property tipoOrdenacao: String read FtipoOrdenacao write FtipoOrdenacao;
     procedure setDataInicial(pData:TDate);
     procedure setDataFinal(pData:TDate);
-
     constructor create; overload;
-    constructor create(pDataInicial, pDataFinal:TDate; pFiltrarDataPor:String = FILTRO_RELACAO_BOLETOS_FILTRARPOR_SITUACAO; pSituacao:String = FILTRO_RELACAO_BOLETOS_SITUACAO_PAGO ); overload;
+    constructor create(pDataInicial, pDataFinal:TDate; pFiltrarDataPor:String = FILTRO_RELACAO_BOLETOS_FILTRARPOR_VENCIMENTO; pSituacao:String = '' ); overload;
   end;
-
   TRetornoFiltroBoleto = class(TJsonSerializable)
   private
 
@@ -89,13 +82,15 @@ uses
 constructor TFiltroBoleto.create;
 begin
   inherited create;
+  self.setDataInicial(today-1);
+  self.setDataFinal(today);
+  //Valores padrão da API:
   self.filtrarDataPor := FILTRO_RELACAO_BOLETOS_FILTRARPOR_VENCIMENTO;
+  self.situacao       := '';
   self.ordenarPor     := FILTRO_RELACAO_BOLETOS_ORDENARPOR_PAGADOR;
   self.tipoOrdenacao  := FILTRO_RELACAO_BOLETOS_TIPOORDENACAO_ASC;
   self.itensPorPagina := 1000;
   self.paginaAtual    := 0;
-  self.setDataInicial(today-1);
-  self.setDataFinal(today);
 end;
 
 constructor TFiltroBoleto.create(pDataInicial, pDataFinal: TDate;
@@ -106,6 +101,9 @@ begin
   self.setDataFinal(pDataFinal);
   self.filtrarDataPor := pFiltrarDataPor;
   self.situacao       := pSituacao;
+  //Valores padrão da API:
+  self.ordenarPor     := FILTRO_RELACAO_BOLETOS_ORDENARPOR_PAGADOR;
+  self.tipoOrdenacao  := FILTRO_RELACAO_BOLETOS_TIPOORDENACAO_ASC;
   self.itensPorPagina := 1000;
   self.paginaAtual    := 0;
 end;
