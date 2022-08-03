@@ -3,9 +3,9 @@ unit ApiInter.Model.BancoInter;
 interface
 
 uses
-  ApiInter.Model.Boleto, ApiInter.Model.JsonSerializable, ApiInter.Commons,
+  ApiInter.Model.Boleto, ApiInter.Model.FiltroBoleto, ApiInter.Model.JsonSerializable, ApiInter.Commons,
   System.SysUtils, System.JSON, System.Classes, System.NetEncoding,
-  ApiInter.Model.OAuth;
+  ApiInter.Model.OAuth, System.Generics.Collections;
 
 type
 
@@ -25,6 +25,7 @@ type
     function auth(ClientId, ClientSecret: String): TReply;
     destructor Destroy; override;
     function GetBoleto(NossoNumero: string): string;
+    function GetRelacaoBoletos(pfiltro:TFiltroBoleto): TList<TBoleto>;
     function CancelarBoleto(NossoNumero: string;motivoCancelamento:TBoletoCancelamento): string;
     function CreateBoleto(Boleto: TBoleto): string;
     function getPdfBoleto(NossoNumero, SavePath: string): string;
@@ -182,7 +183,7 @@ begin
         .SetKeyPassword(FKeyPassword)
         .SetBearerToken(self.oAuthToken.access_token)
         .SetCustomHeaders(FHttp_params)
-        .Post(Data.ToJson);
+        .Post(Data.ToJson.ToJSON);
 
     if (Result.Http_code = 503) then
     begin
@@ -269,6 +270,46 @@ begin
     ATarget.Free;
   end;
 
+end;
+
+function TBancoInter.GetRelacaoBoletos(pfiltro:TFiltroBoleto): TList<TBoleto>;
+Var
+  Reply: TReply;
+  lRetornoHeader:TRetornoFiltroBoleto;
+  I:Integer;
+begin
+  FHttp_params.Clear;
+  FHttp_params.AddPair('Content-type', 'application/json');
+  lRetornoHeader := TRetornoFiltroBoleto.Create;
+  result := TList<TBoleto>.create;
+  var LJSONObject: TJSONObject := nil;
+  try
+    repeat
+
+       Reply := Self.ControllerGet('/cobranca/v2/boletos?'+pfiltro.toURLQueryParam);
+
+      try
+
+        LJSONObject := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( Reply.body ), 0) as TJSONObject;
+        lRetornoHeader.FromJson(LJSONObject);
+
+        var lListaBoletos : TJSONArray := LJSONObject.GetValue<TJSONArray>('content');
+        for I := 0 to lListaBoletos.Count-1 do
+        begin
+          var lBoleto:TBoleto := TBoleto.Create;
+          lBoleto.FromJson(lListaBoletos.Items[i] as TJSONObject);
+          Result.Add(lBoleto);
+        end;
+      finally
+        LJSONObject.Free;
+      end;
+      if not lRetornoHeader.last then
+        pfiltro.paginaAtual := pfiltro.paginaAtual+1;
+
+    until lRetornoHeader.last;
+  finally
+    lRetornoHeader.Free;
+  end;
 end;
 
 end.

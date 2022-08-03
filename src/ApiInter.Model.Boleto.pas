@@ -5,7 +5,7 @@ interface
 uses
   ApiInter.Model.JsonSerializable, ApiInter.Model.Desconto, ApiInter.Model.Multa,
   ApiInter.Model.Mensagem, ApiInter.Model.Mora, ApiInter.Model.Pagador,
-  REST.Json.Types;
+  REST.Json.Types, SysUtils;
 
 type
 
@@ -28,6 +28,9 @@ type
     FDesconto2: TDesconto;
     FDesconto3: TDesconto;
     FDesconto1: TDesconto;
+    Fsituacao: String;
+    FvalorTotalRecebimento: Currency;
+    FdataHoraSituacao: String;
     function GetcnpjCPFBeneficiario: string;
     function GetCodigoBarras: String;
     function GetDataEmissao: String;
@@ -77,9 +80,15 @@ type
     property Desconto3: TDesconto read GetDesconto3 write SetDesconto3;
     property Multa: TMulta read GetMulta write SetMulta;
     property Mora: TMora read GetMora write SetMora;
+    //Dados provenientes do Banco:
     property NossoNumero: String read GetNossoNumero write SetNossoNumero;
     property CodigoBarras: String read GetCodigoBarras write SetCodigoBarras;
     property LinhaDigitavel: String read GetLinhaDigitavel write SetLinhaDigitavel;
+    property situacao: String read Fsituacao write Fsituacao;
+    property valorTotalRecebimento: Currency read FvalorTotalRecebimento write FvalorTotalRecebimento;
+    property dataHoraSituacao: String read FdataHoraSituacao write FdataHoraSituacao;
+    function getDataHoraSituacao:TDateTime;
+
     //property Controller = null;
     constructor Create;
     destructor Destroy; override;
@@ -111,6 +120,8 @@ const
 
 implementation
 
+uses
+  ApiInter.Commons;
 
 { TBoleto }
 
@@ -160,6 +171,11 @@ end;
 function TBoleto.GetDataEmissao: String;
 begin
   Result := FDataEmissao;
+end;
+
+function TBoleto.getDataHoraSituacao: TDateTime;
+begin
+  result := StrToDateTime(FdataHoraSituacao, FormatSettingsBancoInter)
 end;
 
 function TBoleto.GetDataVencimento: String;
