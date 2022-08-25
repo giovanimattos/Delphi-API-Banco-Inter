@@ -20,7 +20,8 @@ type
     function SetKeyPassword(KeyPassword: String): IClientHttp;
     function SetBearerToken(token: String): IClientHttp;
     function SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
-    function Get: TReply;
+    function Get: TReply; overload;
+    function Get(ATarget:TMemoryStream): TReply; overload;
     function Post(ASource: String): TReply; overload;
     function Post(ASource: TStrings): TReply; overload;
   protected
@@ -69,10 +70,36 @@ begin
   inherited;
 end;
 
+function TIndyClientHttp.Get(ATarget: TMemoryStream): TReply;
+begin
+  Result.Header := '';
+  Result.Body := '';
+  Result.Http_code := 0;
+  Result.Http_response := '';
+
+  try
+    try
+      IdHTTP.Get(IdHTTP.Request.URL, ATarget);
+
+      Result.Header := '';
+      Result.Http_code := IdHTTP.ResponseCode;
+      Result.Http_response := IdHTTP.ResponseText;
+    except
+      on e: exception do
+      begin
+        Result.Http_code := IdHTTP.ResponseCode;
+        Result.Http_response := IdHTTP.ResponseText;
+      end;
+    end;
+  finally
+  end;
+end;
+
 function TIndyClientHttp.SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
 begin
   Result := Self;
-  IdHTTP.Request.CustomHeaders.AddStrings(CustomHeaders);
+  if CustomHeaders<>nil then
+    IdHTTP.Request.CustomHeaders.AddStrings(CustomHeaders);
 end;
 
 function TIndyClientHttp.SetBearerToken(token: String): IClientHttp;
