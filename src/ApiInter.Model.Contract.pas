@@ -15,8 +15,9 @@ type
     function SetKeyPassword(KeyPassword: String): IClientHttp;
     function SetBearerToken(token: String): IClientHttp;
     function SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
-    function Get: TReply;
-    function Post(ASource: String): TReply;  overload;
+    function Get: TReply; overload;
+    function Get(AStream:TMemoryStream): TReply; overload;
+    function Post(ASource: String): TReply; overload;
     function Post(ASource: TStrings): TReply; overload;
   end;
 

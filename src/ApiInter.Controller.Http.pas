@@ -21,7 +21,8 @@ type
     function SetKeyPassword(KeyPassword: String): IClientHttp;
     function SetCustomHeaders(CustomHeaders: TStrings): IClientHttp;
     function SetBearerToken(token: String): IClientHttp;
-    function Get: TReply;
+    function Get: TReply; overload;
+    function Get(AStream:TMemoryStream): TReply; overload;
     function Post(ASource: String): TReply;  overload;
     function Post(ASource: TStrings): TReply; overload;
   public
@@ -31,6 +32,19 @@ type
 implementation
 
 { TControllerHttp }
+
+function TControllerHttp.Get(AStream: TMemoryStream): TReply;
+begin
+  Result :=
+    TIndyClientHttp.New
+      .SetUrl(FUrl)
+      .SetCertificateFile(FCertificateFile)
+      .SetKeyFile(FKeyFile)
+      .SetKeyPassword(FKeyPassword)
+      .SetBearerToken(FBearerToken)
+      .SetCustomHeaders(FCustomHeaders)
+      .Get(AStream);
+end;
 
 class function TControllerHttp.New: IClientHttp;
 begin

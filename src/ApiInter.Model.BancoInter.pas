@@ -28,7 +28,8 @@ type
     function GetRelacaoBoletos(pfiltro:TFiltroBoleto): TList<TBoleto>;
     function CancelarBoleto(NossoNumero: string;motivoCancelamento:TBoletoCancelamento): string;
     function CreateBoleto(Boleto: TBoleto): string;
-    function getPdfBoleto(NossoNumero, SavePath: string): string;
+    function getPdfBoleto(NossoNumero, SavePath: string): string; overload;
+    procedure getPdfBoleto(NossoNumero: string; ATarget:TMemoryStream); overload;
 
   end;
 
@@ -212,6 +213,33 @@ begin
 
   Reply := Self.ControllerGet('/cobranca/v2/boletos/'+NossoNumero);
   Result := Reply.body;
+end;
+
+procedure TBancoInter.getPdfBoleto(NossoNumero: string;
+  ATarget: TMemoryStream);
+Var
+  Reply: TReply;
+  ASource: TStringStream;
+begin
+  FHttp_params.Clear;
+  FHttp_params.AddPair('accept', 'application/pdf');
+
+  Reply := Self.ControllerGet('/cobranca/v2/boletos/'+NossoNumero+'/pdf');
+  var pdfRetorno : TBoletoPDFRetorno := TBoletoPDFRetorno.Create;
+  try
+    pdfRetorno.FromJson(reply.Body);
+    ASource := TStringStream.Create(pdfRetorno.pdf);
+  finally
+    pdfRetorno.Free;
+  end;
+  try
+
+    TBase64Encoding.Base64.Decode(ASource, ATarget);
+
+  finally
+    ASource.Free;
+  end;
+
 end;
 
 function TBancoInter.CreateBoleto(Boleto: TBoleto): string;
